@@ -1,0 +1,4 @@
+An example project of unit testing android applications using gradle,
+ActionBarSherlock (or any other aar), and Robolectric.
+
+Just run "gradle robolectric"
