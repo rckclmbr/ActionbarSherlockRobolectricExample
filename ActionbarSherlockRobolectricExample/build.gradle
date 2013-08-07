@@ -1,0 +1,78 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.5.+'
+    }
+}
+apply plugin: 'android'
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    unitTest {
+        java.srcDirs = ['src/test/java']
+        resources.srcDirs = ['src/test/resources']
+//        res.srcDirs = ['res']
+    }
+}
+
+task unitTest(type: Test, dependsOn: assemble) {
+    workingDir 'src/main'
+
+    testClassesDir = sourceSets.unitTest.output.classesDir
+
+    android.sourceSets.main.java.srcDirs.each { dir ->
+        def buildDir = dir.getAbsolutePath().split('/')
+        buildDir = (buildDir[0..(buildDir.length - 4)] + ['build', 'classes', 'debug']).join('/')
+
+        project.getPlugins().getPlugin('android').prepareTaskMap.each {
+            sourceSets.unitTest.compileClasspath += files(it.value.explodedDir.getAbsolutePath() + '/classes.jar')
+            sourceSets.unitTest.runtimeClasspath += files(it.value.explodedDir.getAbsolutePath() + '/classes.jar')
+        }
+
+        sourceSets.unitTest.compileClasspath += files(buildDir)
+        sourceSets.unitTest.runtimeClasspath += files(buildDir)
+    }
+
+    classpath = sourceSets.unitTest.runtimeClasspath
+
+//    description = "run unit tests"
+//    testClassesDir = project.sourceSets.unitTest.output.classesDir
+//    classpath = project.sourceSets.unitTest.runtimeClasspath
+//    classpath += "$project.buildDir/exploded-bundles/ComActionbarsherlockActionbarsherlock440.aar/classes.jar"
+}
+
+dependencies {
+    compile 'com.android.support:support-v4:18.0.+'
+    compile 'com.actionbarsherlock:actionbarsherlock:4.4.0@aar'
+//    compile 'com.actionbarsherlock:actionbarsherlock:4.4.0@jar'
+
+    unitTestCompile files("$project.buildDir/classes/debug")
+    unitTestCompile 'com.android.support:support-v4:18.0.+'
+    unitTestCompile 'junit:junit:4.11'
+    unitTestCompile 'org.robolectric:robolectric:2.1.1'
+//    unitTestCompile 'com.actionbarsherlock:actionbarsherlock:4.4.0@aar'
+//    unitTestCompile 'com.actionbarsherlock:actionbarsherlock:4.4.0@jar'
+}
+
+android {
+    compileSdkVersion 18
+    buildToolsVersion "18.0.1"
+
+    defaultConfig {
+        minSdkVersion 7
+        targetSdkVersion 18
+    }
+}
+
+
+configurations {
+    unitTestCompile.extendsFrom runtime
+    unitTestRuntime.extendsFrom unitTestCompile
+}
+
+build.dependsOn unitTest
